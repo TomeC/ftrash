@@ -1,0 +1,61 @@
+ #!/bin/bash
+
+for file in $@
+do
+	# 显示所有的删除文件
+	if [ $file == "-l" ]
+	then
+		echo `ls ~/.trash/`
+		continue
+	fi
+
+	FileList=`grep $file ~/.trash/.log`
+	if [ "$FileList" == "" ]
+	then
+		echo "未找到 $file 的匹配项"
+		exit 1
+	fi
+
+	line=1
+	ignore=0
+	# 显示查找到的文件
+	for SubFile in $FileList
+	do
+		if [ $(($ignore%3)) == 1 ]
+		then
+			echo "$line 行: $SubFile"
+			FileArr[$line]=$SubFile
+			line=$(($line+1))
+		else
+			FileDate[$line]=$SubFile
+		fi
+		ignore=$(($ignore+1))
+	done
+
+	read -p "你想恢复哪个文件，序号:" num
+	for SubNum in $num
+	do
+		if [ `echo $SubNum | grep "[^0-9]"` ]
+		then
+			echo "$SubNum 不是数字"
+			continue
+		fi
+
+		if [ $SubNum -ge $line ]
+		then
+			echo "$SubNum 太大了，输入的数据不能大于 $(($line-1))"
+			continue
+		fi
+		
+		FilePath=${FileArr[$SubNum]}
+
+		sign=`echo $FilePath | md5sum`
+		sign=${sign:0:-3}
+		echo $sign
+		`sed -i /$sign/'d' ~/.trash/.log`
+		FileName=${FilePath##*/}
+		
+		mv ~/.trash/"${FileName}_${FileDate[$SubNum]}" $FilePath
+	done
+done
+

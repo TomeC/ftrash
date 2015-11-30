@@ -1,0 +1,61 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]
+then
+	echo "输入你要删除的文件地址"
+	exit 1
+fi
+
+for file in $@
+do
+	if ! test -e $file
+	then
+		echo "$file not exist"
+		exit 1
+	fi
+	# 如果文件大于1G，直接删除
+	if [ -f $file ] && [ `ls -l $file | awk '{print $5}'` -gt 1073741824 ]
+	then
+		echo "$file is too large than 1G, delete directly"
+		rm -f $file
+		exit 1
+	fi
+	if [ -d $file ] && [ `du -sb $file | awk '{print $1}'` -gt 1073741824 ]
+	then
+		echo "$file is too large than 1G, delete directly"
+		rm -rf $file
+		exit 1
+	fi
+
+	path=$(pwd)
+
+	# process relative path
+	mark=${file%%/*}
+	while [ "$mark" == ".." ]
+	do
+		path=${path%/*}
+		file=${file#*/}
+		mark=${file%%/*}
+	done
+	
+	if [ $mark == '.' ]
+	then
+		file=${file#*/}
+	fi
+
+	time=`date +%Y%m%d_%H_%M_%S`
+	if [ -z ${file##*/} ]
+	then
+		file=${file%*/}
+	fi
+	path="${path}/${file}"
+	if mv -f $path ~/.trash/"${file##*/}_${time}"
+	then
+		sign=`echo $path | md5sum`
+		`echo "$time $path ${sign:0:-3}" >>~/.trash/.log`
+	else
+		echo "the operation failed"
+		exit 1
+	fi
+done
+
