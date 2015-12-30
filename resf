@@ -13,7 +13,7 @@ do
 	if [ "$FileList" == "" ]
 	then
 		echo "未找到 $file 的匹配项"
-		exit 1
+		continue
 	fi
 
 	line=1

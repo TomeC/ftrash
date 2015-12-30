@@ -11,20 +11,20 @@ do
 	if ! test -e $file
 	then
 		echo "$file not exist"
-		exit 1
+		continue
 	fi
 	# 如果文件大于1G，直接删除
 	if [ -f $file ] && [ `ls -l $file | awk '{print $5}'` -gt 1073741824 ]
 	then
 		echo "$file is too large than 1G, delete directly"
 		rm -f $file
-		exit 1
+		continue
 	fi
 	if [ -d $file ] && [ `du -sb $file | awk '{print $1}'` -gt 1073741824 ]
 	then
 		echo "$file is too large than 1G, delete directly"
 		rm -rf $file
-		exit 1
+		continue
 	fi
 
 	path=$(pwd)
@@ -54,8 +54,8 @@ do
 		sign=`echo $path | md5sum`
 		`echo "$time $path ${sign:0:-3}" >>~/.trash/.log`
 	else
-		echo "the operation failed"
-		exit 1
+		echo "move file to $path failed"
+		continue
 	fi
 done
 
